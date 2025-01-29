@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Win Percentage Predictor</title>
+    <title>QB Matchup Predictor</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -34,15 +34,31 @@
         .slider {
             width: 80%;
         }
+        .qb-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h2>Win Percentage Predictor</h2>
-        <p>Enter a Quarterback Rating to predict the Win Percentage:</p>
-        <input type="number" id="qbrInput" placeholder="Enter QB Rating" step="0.1">
-        <button onclick="predictWin()">Predict Win %</button>
+        <h2>QB Matchup Predictor</h2>
+        <p>Enter two QB Ratings to predict who will win:</p>
+
+        <div class="qb-container">
+            <div>
+                <p><strong>QB 1</strong></p>
+                <input type="number" id="qbr1Input" placeholder="QB 1 Rating" step="0.1">
+            </div>
+            <div>
+                <p><strong>QB 2</strong></p>
+                <input type="number" id="qbr2Input" placeholder="QB 2 Rating" step="0.1">
+            </div>
+        </div>
+
+        <button onclick="predictMatchup()">Predict Winner</button>
         <p id="result"></p>
 
         <div class="slider-container">
@@ -55,32 +71,43 @@
         // Regression model values (from Python model)
         const intercept = -0.8949;  // Intercept from Python model
         const slope = 0.0151;       // Slope from Python model
-        let adjustedR2 = 0.571;     // Adjusted R² value from model
+        let adjustedR2 = 0.571;     // Initial Adjusted R²
 
         // Function to predict win percentage
-        function predictWin() {
-            let qbr = parseFloat(document.getElementById("qbrInput").value);
-            if (isNaN(qbr)) {
-                document.getElementById("result").innerHTML = "Please enter a valid QB Rating.";
-                return;
-            }
-
+        function predictWin(qbr) {
             let predictedWinPct = intercept + (slope * qbr);
 
             // Adjust win % based on R² confidence (0 = random, 100 = perfect)
             let r2Confidence = parseFloat(document.getElementById("r2Slider").value) / 100;
             let adjustedWinPct = (r2Confidence * predictedWinPct) + ((1 - r2Confidence) * 0.5); // Blend with 50%
 
-            adjustedWinPct = Math.max(0, Math.min(1, adjustedWinPct)); // Keep within 0% - 100%
+            return Math.max(0, Math.min(1, adjustedWinPct)); // Keep within 0% - 100%
+        }
 
-            document.getElementById("result").innerHTML = `Predicted Win %: ${(adjustedWinPct * 100).toFixed(2)}%`;
+        // Function to predict matchup winner
+        function predictMatchup() {
+            let qbr1 = parseFloat(document.getElementById("qbr1Input").value);
+            let qbr2 = parseFloat(document.getElementById("qbr2Input").value);
+
+            if (isNaN(qbr1) || isNaN(qbr2)) {
+                document.getElementById("result").innerHTML = "Please enter valid QB Ratings.";
+                return;
+            }
+
+            let winPct1 = predictWin(qbr1);
+            let winPct2 = predictWin(qbr2);
+
+            let resultText = `QB 1 Win %: ${(winPct1 * 100).toFixed(2)}% vs. QB 2 Win %: ${(winPct2 * 100).toFixed(2)}%<br>`;
+            resultText += winPct1 > winPct2 ? "<strong>QB 1 is more likely to win!</strong>" : "<strong>QB 2 is more likely to win!</strong>";
+
+            document.getElementById("result").innerHTML = resultText;
         }
 
         // Function to update R² value display
         function updateR2() {
             let r2Value = document.getElementById("r2Slider").value;
             document.getElementById("r2Value").innerHTML = r2Value;
-            predictWin(); // Recalculate prediction when R² changes
+            predictMatchup(); // Recalculate prediction when R² changes
         }
     </script>
 
