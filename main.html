@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Win Percentage Predictor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            display: inline-block;
+        }
+        input, button, .slider {
+            padding: 10px;
+            margin: 10px;
+            font-size: 16px;
+        }
+        #result {
+            font-size: 20px;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+        .slider-container {
+            margin-top: 20px;
+        }
+        .slider {
+            width: 80%;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Win Percentage Predictor</h2>
+        <p>Enter a Quarterback Rating to predict the Win Percentage:</p>
+        <input type="number" id="qbrInput" placeholder="Enter QB Rating" step="0.1">
+        <button onclick="predictWin()">Predict Win %</button>
+        <p id="result"></p>
+
+        <div class="slider-container">
+            <p>Adjust R² (Model Confidence): <span id="r2Value">57</span>%</p>
+            <input type="range" min="0" max="100" value="57" class="slider" id="r2Slider" oninput="updateR2()">
+        </div>
+    </div>
+
+    <script>
+        // Regression model values (from Python model)
+        const intercept = -0.8949;  // Intercept from Python model
+        const slope = 0.0151;       // Slope from Python model
+        let adjustedR2 = 0.571;     // Adjusted R² value from model
+
+        // Function to predict win percentage
+        function predictWin() {
+            let qbr = parseFloat(document.getElementById("qbrInput").value);
+            if (isNaN(qbr)) {
+                document.getElementById("result").innerHTML = "Please enter a valid QB Rating.";
+                return;
+            }
+
+            let predictedWinPct = intercept + (slope * qbr);
+
+            // Adjust win % based on R² confidence (0 = random, 100 = perfect)
+            let r2Confidence = parseFloat(document.getElementById("r2Slider").value) / 100;
+            let adjustedWinPct = (r2Confidence * predictedWinPct) + ((1 - r2Confidence) * 0.5); // Blend with 50%
+
+            adjustedWinPct = Math.max(0, Math.min(1, adjustedWinPct)); // Keep within 0% - 100%
+
+            document.getElementById("result").innerHTML = `Predicted Win %: ${(adjustedWinPct * 100).toFixed(2)}%`;
+        }
+
+        // Function to update R² value display
+        function updateR2() {
+            let r2Value = document.getElementById("r2Slider").value;
+            document.getElementById("r2Value").innerHTML = r2Value;
+            predictWin(); // Recalculate prediction when R² changes
+        }
+    </script>
+
+</body>
+</html>
